@@ -1,0 +1,3 @@
+[submodule "pycrac"]
+	path = pycrac
+	url = https://git.ecdf.ed.ac.uk/sgrannem/pycrac.git
