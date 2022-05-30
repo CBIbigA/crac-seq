@@ -1,0 +1,7 @@
+name: novoalign
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - novoalign==3.09.00
