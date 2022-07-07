@@ -1,8 +1,10 @@
+
+
 rule novoindex:
 	input:
-		genome="{0}/{1}{2}".format(config["genome"]["dir"],config["genome"]["name"],config["genome"]["ext"])
+		genome=getGenome
 	output:
-		index="{0}/{1}.index".format(config["genome"]["dir"],config["genome"]["name"])
+		index="OUT/{genome}/{genome}.index"
 	threads:config["threads"]
 	conda:
 		"../envs/novoalign.yaml"
@@ -10,13 +12,27 @@ rule novoindex:
 		"novoindex -t {threads} {output.index} {input.genome}"
 
 
+
+if not config["cutadapt"]["adapters"]:
+	in_ext = config["fastq"]
+else:
+	in_ext = ".trimmed"+config["fastq"]
+
+
+def conditionalInputNovoAlign(wildcards):
+	if config["demultiplexing"]["demultiplex"]:
+		return(OUT+"/demultiplex/"+wildcards.sample+in_ext)
+	else:
+		return(OUT+"/umi/"+wildcards.sample+in_ext)
+
 rule novoalign:
 	input:
-		index="{0}/{1}.index".format(config["genome"]["dir"],config["genome"]["name"]),
-		fastq=OUT+"/demultiplex/{prefix}"+in_ext
+		genome=getGenome,
+		index="OUT/{genome}/{genome}.index",
+		fastq=conditionalInputNovoAlign
 	threads:1
 	output:
-		OUT+"/mapping/sam/{prefix}.sam"
+		OUT+"/{genome}/mapping/sam/{sample}.sam"
 	conda:
 		"../envs/novoalign.yaml"
 	shell:

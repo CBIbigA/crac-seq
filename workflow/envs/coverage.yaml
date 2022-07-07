@@ -1,0 +1,10 @@
+name: coverage
+channels:
+  - ccordoba12
+  - anaconda
+  - pkgs/r
+  - pkgs/main
+  - bioconda
+  - conda-forge
+dependencies:
+  - bioconductor-rsamtools

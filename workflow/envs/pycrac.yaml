@@ -4,8 +4,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python==3.6
+  - python==3.7
   - pandas
   - pip:
     - pyCRAC
-    - pyfaidx==0.7.0

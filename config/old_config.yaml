@@ -1,17 +1,14 @@
-input_dir: "data/CRAC"
+input_dir: "data"
 output_dir: "out"
 samples:
-  - RPI4_S1_L001_R1_001
-  - RPI5_S2_L001_R1_001
-  - RPI6_S3_L001_R1_001
-  - RPI7_S4_L001_R1_001
+  - CDE0103_S1_L001_R1_001
 fastq:  ".fastq"
 samtools:
   rm_duplicates: true
   quality: 25
   custom: -F 2048
 demultiplexing:
-  demultiplex: false
+  demultiplex: true
   five_prime: true
   barcode:
     WT: ATTAGC
@@ -22,7 +19,7 @@ demultiplexing:
 umi_tools:
   extract:
     extract-method: "string"
-    bc-pattern: NNNNN
+    bc-pattern: NNN
     five_prime: true
     extra: ""
 cutadapt:
@@ -35,12 +32,10 @@ genome:
     name: 'Saccharomyces_cerevisiae.EF2.59.1.0'
     ext: '.fa'
     gtf: 'data/genome/Saccharomyces_cerevisiae.EF2.59.1.3.gtf'
-    bed: "data/genome/genes_of_interest.bed"
   rDNA:
     dir: 'data/rDNA'
-    name: 'NTS1-2_RDN37-1_NTS2-1_5S'
+    name: '5S_NTS2-1_RDN37-1_NTS1-2'
     ext: '.fa'
     gtf: ""
-    bed: "data/rDNA/NTS1-2_RDN37-1_NTS2-1_5S.bed"
 fastqc:
   multi_qc_path: "config/multiqc.yaml"

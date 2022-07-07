@@ -1,0 +1,156 @@
+import pandas as pd
+
+configfile: "config/config.yaml"
+IN = config["input_dir"]
+OUT = config["output_dir"]
+
+BARCODES = config["demultiplexing"]["barcode"]
+
+BARCODES_COMBN = ["{0}_{1}".format(x[1],x[0]) for x in BARCODES.items()]
+
+
+if not config["cutadapt"]["adapters"]:
+	in_ext = config["fastq"]
+else:
+	in_ext = ".trimmed"+config["fastq"]
+
+if config["samtools"]["rm_duplicates"]:
+	samtype="rmdups"
+else:
+	samtype="sorted"
+
+
+
+include:"rules/novoalign.smk"
+include:"rules/samtools.smk"
+
+rule all:
+	input:
+		# expand(OUT+"/mapping/bam/{type}/{sample}_{barcode}.sam",type=["rmdups","sorted"],sample = config["samples"],barcode=BARCODES_COMBN),
+		expand(OUT+"/mapping/bam/{type}/{sample}_{barcode}.{type}.bam",type=["umidedup","rmdups"],sample = config["samples"],barcode=BARCODES_COMBN),
+		expand(OUT+"/mapping/pyClusterReads/{sample}_{barcode}.clusters.gtf",sample = config["samples"],barcode=BARCODES_COMBN)
+
+
+
+
+
+
+
+rule make_barcode:
+	output: 
+		tsv = OUT+"/barcode.txt"
+	run:
+		barcode_tsv = pd.DataFrame(BARCODES.items())
+		barcode_tsv = barcode_tsv[[1,0]]
+		barcode_tsv.to_csv(output.tsv,sep="\t",header=False,index=False)
+
+
+
+
+
+rule pyBarcodeFilter:
+	input:
+		barcode = OUT+"/barcode.txt",
+		fastq = IN+"/{sample}"+config["fastq"]
+	output:
+		expand("{{sample}}_{barcode}"+config["fastq"],barcode=BARCODES_COMBN)
+	conda: "envs/pycrac.yaml"
+	params:
+		outpath = OUT+"/demultiplex",
+		outfile = expand("{{sample}}_{barcode}"+config["fastq"],barcode=BARCODES_COMBN)
+	script:
+		"scripts/pyBarcodeFilter.py"
+
+
+rule mvpyBarcodeFilter:
+	input:
+		expand("{{sample}}_{barcode}"+config["fastq"],barcode=BARCODES_COMBN)
+	output:
+		expand(OUT+"/demultiplex/{{sample}}_{barcode}"+config["fastq"],barcode=BARCODES_COMBN)
+	params:
+		outpath = OUT+"/demultiplex"
+	shell:
+		"mv {input} {params.outpath}"
+
+
+
+rule cutadapt:
+	input:
+		fastq=OUT+"/demultiplex/{prefix}"+config["fastq"]
+	output:
+		fastq=OUT+"/demultiplex/{prefix}.trimmed"+config["fastq"],
+		qc=OUT+"/demultiplex/{prefix}.trimmed.qc"
+	threads:config["threads"]
+	params:
+		adapters = config["cutadapt"]["adapters"],
+		extra = config["cutadapt"]["extra"]
+	conda:
+		"envs/cutadapt.yaml"
+	shell:
+		"cutadapt {params.adapters} {params.extra} -j {threads} -o {output.fastq} {input} > {output.qc}"
+
+
+if config["umi_tools"]["extract"]["five_prime"]:
+	umi_extract_extra = config["umi_tools"]["extract"]["extra"]+""
+else:
+	umi_extract_extra = config["umi_tools"]["extract"]["extra"]+" --3prime"
+
+rule umi_extract:
+	input:
+		fastq=OUT+"/demultiplex/{prefix}"+config["fastq"]
+	output:
+		fastq=OUT+"/demultiplex/{prefix}.umi"+config["fastq"]
+	log:OUT+"/umi/{prefix}.umi.log"
+	conda:
+		"envs/umi_tools.yaml"
+	params:
+		extra= umi_extract_extra,
+		bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
+		extract_method=config["umi_tools"]["extract"]["extract-method"]
+	shell:
+		"umi_tools extract --bc-pattern={params.bc_pattern} --extract-method={params.extract_method} --log={log} --stdout={output.fastq} --stdin={input.fastq} {params.extra}"
+
+rule umi_dedup:
+	input:
+		bam=OUT+"/mapping/bam/sorted/{prefix}.sorted.bam",
+		bai=OUT+"/mapping/bam/sorted/{prefix}.sorted.bai"
+	output:
+		bam=OUT+"/mapping/bam/umidedup/{prefix}.umidedup.bam"
+	conda:
+		"envs/umi_tools.yaml"
+	params:
+		extra= umi_extract_extra,
+		bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
+		extract_method=config["umi_tools"]["extract"]["extract-method"]
+	shell:
+		"umi_tools dedup -I {input.bam} --output-stats=deduplicated -S {output.bam}"
+
+
+
+
+rule pyReadCounters:
+	input:
+		sam=OUT+"/mapping/sam/{prefix}.sam",
+		gtf=config["genome"]["gtf"]
+	output:
+		expand(OUT+"/mapping/pyReadCounters/{{prefix}}_{generation_type}",generation_type = ["hittable_reads.txt","file_statistics_reads.txt","count_output_reads.gtf"])
+	conda: "envs/pipeline.yaml"
+	params:
+		outfile = OUT+"/mapping/pyReadCounters/{prefix}"
+	shell:
+		"python pycrac/pyCRAC/pyReadCounters.py -f {input.sam} --file_type=sam --gtf={input.gtf} -o {params.outfile}"
+
+
+
+rule pyClusterReads:
+	input:
+		gtf_pyreadcounters=OUT+"/mapping/pyReadCounters/{prefix}_count_output_reads.gtf",
+		gtf=config["genome"]["gtf"]
+	output:
+		OUT+"/mapping/pyClusterReads/{prefix}.clusters.gtf"
+	conda: "envs/pipeline.yaml"
+	params:
+		outfile = OUT+"/mapping/pyClusterReads/{prefix}.clusters.gtf"
+	shell:
+		"python pycrac/pyCRAC/pyClusterReads.py -f {input.gtf_pyreadcounters} --gtf={input.gtf} -o {params.outfile}"
+

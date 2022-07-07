@@ -5,7 +5,10 @@ IN = config["input_dir"]
 OUT = config["output_dir"]
 
 
-
+if not config["cutadapt"]["adapters"]:
+	in_ext = config["fastq"]
+else:
+	in_ext = ".trimmed"+config["fastq"]
 
 if config["samtools"]["rm_duplicates"]:
 	samtype="rmdups"
@@ -19,25 +22,19 @@ def getGenome(wildcards):
 
 include:"rules/novoalign.smk"
 include:"rules/samtools.smk"
-include:"rules/umi_tools.smk"
-include:"rules/cutadapt.smk"
 
 
 if config["demultiplexing"]["demultiplex"]:
 	rule all:
 		input:
 			#expand(OUT+"/{genome}/coverage/{samtype}/{sample}_{barcode}.{samtype}.{type}.bedGraph",samtype=["umidedup","sorted"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"],type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
 			#expand(OUT+"/demultiplex/{sample}_{barcode}.trimmed"+config["fastq"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 			#expand(OUT+"/{genome}/mapping/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 else:
 	rule all:
 		input:
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.bedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.3primebedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"])
+			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.bedGraph",type=["umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"]),
 			
 
 
@@ -56,7 +53,77 @@ rule make_barcode:
 					out.write(">"+str(k)+ '\n'+ str(v) + '$\n')
 
 
+def getOutFormat(wildcards):
+  return(OUT+"/demultiplex/"+wildcards.sample+"_{name}"+config["fastq"])
 
+rule cutadapt_demultiplex:
+	input:
+		barcode = OUT+"/barcode.fa",
+		fastq = OUT+"/umi/{sample}.umi"+config["fastq"]
+	output:
+		expand(OUT+"/demultiplex/{{sample}}_{barcode}"+config["fastq"],barcode=config["demultiplexing"]["barcode"])
+	log:OUT+"/demultiplex/{sample}.demultiplex.qc"
+	threads:config["threads"]
+	params:
+		extra = config["demultiplexing"]["extra"],
+		outformat= getOutFormat,
+		errorate = config["demultiplexing"]["errorate"]
+	conda:
+		"envs/cutadapt.yaml"
+	shell:
+		"cutadapt -e {params.errorate} -j {threads} -g file:{input.barcode} -o '{params.outformat}' {input.fastq} > {log}"
+
+
+rule cutadapt:
+	input:
+		fastq=OUT+"/demultiplex/{prefix}"+config["fastq"]
+	output:
+		fastq=OUT+"/demultiplex/{prefix}.trimmed"+config["fastq"],
+		qc=OUT+"/demultiplex/{prefix}.trimmed.qc"
+	threads:config["threads"]
+	params:
+		adapters = config["cutadapt"]["adapters"],
+		extra = config["cutadapt"]["extra"]
+	conda:
+		"envs/cutadapt.yaml"
+	shell:
+		"cutadapt {params.adapters} {params.extra} -j {threads} -o {output.fastq} {input} > {output.qc}"
+
+
+if config["umi_tools"]["extract"]["five_prime"]:
+	umi_extract_extra = config["umi_tools"]["extract"]["extra"]+""
+else:
+	umi_extract_extra = config["umi_tools"]["extract"]["extra"]+" --3prime"
+
+rule umi_extract:
+	input:
+		fastq=IN+"/{sample}"+config["fastq"]
+	output:
+		fastq=OUT+"/umi/{sample}.umi"+config["fastq"]
+	log:OUT+"/umi/{sample}.umi.log"
+	conda:
+		"envs/umi_tools.yaml"
+	params:
+		extra= umi_extract_extra,
+		bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
+		extract_method=config["umi_tools"]["extract"]["extract-method"]
+	shell:
+		"umi_tools extract --bc-pattern={params.bc_pattern} --extract-method={params.extract_method} --log={log} --stdout={output.fastq} --stdin={input.fastq} {params.extra}"
+
+rule umi_dedup:
+	input:
+		bam=OUT+"/{genome}/mapping/bam/sorted/{prefix}.sorted.bam",
+		bai=OUT+"/{genome}/mapping/bam/sorted/{prefix}.sorted.bai"
+	output:
+		bam=OUT+"/{genome}/mapping/bam/umidedup/{prefix}.umidedup.bam"
+	conda:
+		"envs/umi_tools.yaml"
+	params:
+		extra= umi_extract_extra,
+		bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
+		extract_method=config["umi_tools"]["extract"]["extract-method"]
+	shell:
+		"umi_tools dedup -I {input.bam} --output-stats=deduplicated -S {output.bam}"
 
 
 
@@ -89,17 +156,6 @@ rule pyClusterReads:
 
 
 
-rule generate_coverage_3prime:
-	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai",
-		genome=OUT+"/{genome}_chrom.size"
-	conda: "envs/coverage.yaml"
-	output:
-		OUT+"/{genome}/mapping/coverage/{samtype}/{prefix}.{samtype}.3primebedGraph"
-		# expand(OUT+"/{{genome}}/coverage/{{samtype}}/{{prefix}}.{{samtype}}.{type}.bedGraph",type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
-	script:
-		"scripts/generate_coverage.R"
 
 
 rule generate_coverage:
