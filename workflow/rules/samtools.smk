@@ -33,7 +33,6 @@ rule sam_to_bam:
 		"samtools view "
 		"{params.custom} -@ {threads} "
 		"-b -S "
-		"-q {params.quality} "
 		"-t {input.genome} "
 		"-o {output} "
 		"{input.sam}"

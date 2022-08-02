@@ -1,10 +1,12 @@
+#.libPaths(c("/usr/local/lib/R/site-library",.libPaths()))
 library(Rsamtools) ; # ScanBam
 library(GenomicAlignments) ; # GAlignement
 library( plyranges ) ; #Export bw
+library(rtracklayer)
 library( Biostrings ) ; #Export bw
 
-seqlens <- snakemake@input["genome"]
-filename <- snakemake@input["bam"];
+seqlens <- snakemake@input[["genome"]]
+filename <- snakemake@input[["bam"]];
 ##Normalisation 
 BF <- BamFile(filename) ;
 nbReads <- countBam(BF)$records ;
@@ -34,4 +36,4 @@ nCovBam <- CovBam * nf ;
 seqlengths( nCovBam ) <- seqlens[names(seqlengths( nCovBam ) )] ;
 
 # export.bedGraph(nCovBam,snakemake@output["3prime_normalized"]) ;
-export.bedGraph(CovBam,snakemake@output[1])
+export.bedGraph(CovBam,snakemake@output[[1]])
