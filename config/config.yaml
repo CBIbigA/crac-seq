@@ -25,6 +25,9 @@ umi_tools:
     bc-pattern: NNNNN
     five_prime: true
     extra: ""
+  trimm:
+    trimm: true
+    trim_supp: 3
 cutadapt:
   extra: ''
   adapters: '-a TGGAATTCTCGG'

@@ -1,0 +1,8 @@
+name: cutadapt
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - umi_tools=1.1.2
+  - fastx_toolkit
