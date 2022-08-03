@@ -16,7 +16,7 @@ if config["umi_tools"]["trimm"]["trimm"]:
 			"../envs/umi_and_trim.yaml"
 		params:
 			trimfile=OUT+"/umi/{sample}_fastx"+config["fastq"],
-			trimnumber=config["umi_tools"]["trimm"]["trim_supp"]+1
+			trimnumber=config["umi_tools"]["trimm"]["trim_supp"]+1,
 			extra= umi_extract_extra,
 			bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
 			extract_method=config["umi_tools"]["extract"]["extract-method"]
