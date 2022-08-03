@@ -21,7 +21,7 @@ if config["umi_tools"]["trimm"]["trimm"]:
 			bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
 			extract_method=config["umi_tools"]["extract"]["extract-method"]
 		shell:
-			"fastx_trimmer -f {params.trimfile} -i {input.fastq} -o {params.trimfile} && "
+			"fastx_trimmer -f {params.trimnumber} -i {input.fastq} -o {params.trimfile} && "
 			"umi_tools extract --bc-pattern={params.bc_pattern} --extract-method={params.extract_method} --log={log} --stdout={output.fastq} --stdin={params.trimfile} {params.extra} && "
 			"rm {params.trimfile}"
 	
