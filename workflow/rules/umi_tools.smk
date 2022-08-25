@@ -50,6 +50,6 @@ rule umi_dedup:
 	conda:
 		"../envs/umi_tools.yaml"
 	params:
-		OUT+"/{genome}/mapping/bam/umidedup/{prefix}"
+		stats=OUT+"/{genome}/mapping/bam/umidedup/{prefix}"
 	shell:
-		"umi_tools dedup -I {input.bam} --output-stats=deduplicated -S {output.bam}"
+		"umi_tools dedup -I {input.bam} --output-stats={params.stats} -S {output.bam}"
