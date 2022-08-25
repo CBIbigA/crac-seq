@@ -50,8 +50,6 @@ rule umi_dedup:
 	conda:
 		"../envs/umi_tools.yaml"
 	params:
-		extra= umi_extract_extra,
-		bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
-		extract_method=config["umi_tools"]["extract"]["extract-method"]
+		OUT+"/{genome}/mapping/bam/umidedup/{prefix}"
 	shell:
 		"umi_tools dedup -I {input.bam} --output-stats=deduplicated -S {output.bam}"
