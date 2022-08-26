@@ -1,15 +1,15 @@
 rule fastqc_raw:
 	input:
-		fastq=OUT+"/demultiplex/{prefix}"+config["fastq"]
+		fastq=OUT+"/{prefix}/demultiplex/{prefix}"+config["fastq"]
 	output:
-		OUT+"/QC/RAW/{prefix}_raw_fastqc.html"
+		OUT+"/{prefix}/QC/RAW/{prefix}_raw_fastqc.html"
 	params:
-		dir=OUT+"/QC/RAW/",
-		before=OUT+"/QC/RAW/{prefix}_fastqc.zip",
-		after=OUT+"/QC/RAW/{prefix}_raw_fastqc.zip"
+		dir=OUT+"/{prefix}/QC/RAW/",
+		before=OUT+"/{prefix}/QC/RAW/{prefix}_fastqc.zip",
+		after=OUT+"/{prefix}/QC/RAW/{prefix}_raw_fastqc.zip"
 	threads: config["threads"]
 	benchmark :
-		OUT+"/benchmarks/fastqc_raw/{prefix}.txt"
+		OUT+"/{prefix}/benchmarks/fastqc_raw/{prefix}.txt"
 	priority: 100
 	conda: "../envs/fastqc.yaml"
 	message : "##RUNNING : fastqc for {input.fastq}"
@@ -20,14 +20,14 @@ rule fastqc_raw:
 
 rule fastqc_bam:
 	input:
-		bam=OUT+"/mapping/bam/{samtype}/{prefix}.{samtype}.bam"
+		bam=OUT+"/{prefix}/mapping/bam/{samtype}/{prefix}.{samtype}.bam"
 	output:
-		OUT+"/QC/bam/{prefix}.{samtype}_fastqc.html"
+		OUT+"/{prefix}/QC/bam/{prefix}.{samtype}_fastqc.html"
 	params:
-		dir=OUT+"/QC/bam/"
+		dir=OUT+"/{prefix}/QC/bam/"
 	threads: config["threads"]
 	benchmark :
-		OUT+"/benchmarks/fastqc_bam/{prefix}.{samtype}.txt"
+		OUT+"/{prefix}/benchmarks/fastqc_bam/{prefix}.{samtype}.txt"
 	priority: 10
 	message : "##RUNNING : fastqc for {input.bam}"
 	conda: "../envs/fastqc.yaml"
@@ -36,15 +36,15 @@ rule fastqc_bam:
 
 rule multi_qc:
 	input:
-		expand(OUT+"/QC/RAW/{sample}_raw_fastqc.zip",sample=config["samples"]),
-		expand(OUT+"/QC/bam/{sample}.{samtype}_fastqc.html",samtype=samtype,sample=config["samples"]),
-		expand(OUT+"/QC/STATS/{type}/{sample}.{samtype}.{type}",samtype=samtype,type = ["stats","idxstats","flagstat"],sample=config["samples"])
+		expand(OUT+"/{sample}/QC/RAW/{sample}_raw_fastqc.zip",sample=config["samples"]),
+		expand(OUT+"/{sample}/QC/bam/{sample}.{samtype}_fastqc.html",samtype=samtype,sample=config["samples"]),
+		expand(OUT+"/{sample}/QC/STATS/{type}/{sample}.{samtype}.{type}",samtype=samtype,type = ["stats","idxstats","flagstat"],sample=config["samples"])
 	output : 
-		OUT+"/QC/MULTIQC/"+OUT+"_multiqc_report.html"
+		OUT+"/{sample}/QC/MULTIQC/"+OUT+"_multiqc_report.html"
 	params:
 		title = OUT,
 		conf = config["fastqc"]["multi_qc_path"],
-		output = OUT+"/QC/MULTIQC",
+		output = OUT+"/{sample}/QC/MULTIQC",
 		filename = OUT+"_multiqc_report.html"
 	priority: 50
 	message : "##RUNNING : MultiQC"

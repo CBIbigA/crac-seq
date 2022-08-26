@@ -27,17 +27,17 @@ if config["demultiplexing"]["demultiplex"]:
 	rule all:
 		input:
 			#expand(OUT+"/{genome}/coverage/{samtype}/{sample}_{barcode}.{samtype}.{type}.bedGraph",samtype=["umidedup","sorted"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"],type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}_{barcode}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 			#expand(OUT+"/demultiplex/{sample}_{barcode}.trimmed"+config["fastq"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
-			#expand(OUT+"/{genome}/mapping/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+			#expand(OUT+"/{genome}/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 else:
 	rule all:
 		input:
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.bedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.3primebedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-			expand(OUT+"/{genome}/mapping/coverage/{type}/{sample}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"])
+			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}.bedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
+			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}.3primebedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
+			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"])
 			
 
 
@@ -63,13 +63,13 @@ rule make_barcode:
 
 rule pyReadCounters:
 	input:
-		sam=OUT+"/{genome}/mapping/sam/{prefix}.sam",
+		sam=OUT+"/{prefix}/{genome}/sam/{prefix}.sam",
 		gtf=lambda wildcards: config[wildcards.genome]["gtf"]
 	output:
-		expand(OUT+"/{{genome}}/mapping/pyReadCounters/{{prefix}}_{generation_type}",generation_type = ["hittable_reads.txt","file_statistics_reads.txt","count_output_reads.gtf"])
+		expand(OUT+"/{{prefix}}/{{genome}}/pyReadCounters/{{prefix}}_{generation_type}",generation_type = ["hittable_reads.txt","file_statistics_reads.txt","count_output_reads.gtf"])
 	conda: "envs/pipeline.yaml"
 	params:
-		outfile = OUT+"/{genome}/mapping/pyReadCounters/{prefix}"
+		outfile = OUT+"/{prefix}/{genome}/pyReadCounters/{prefix}"
 	shell:
 		"python pycrac/pyCRAC/pyReadCounters.py -f {input.sam} --file_type=sam --gtf={input.gtf} -o {params.outfile}"
 
@@ -77,13 +77,13 @@ rule pyReadCounters:
 
 rule pyClusterReads:
 	input:
-		gtf_pyreadcounters=OUT+"/{genome}/mapping/pyReadCounters/{prefix}_count_output_reads.gtf",
+		gtf_pyreadcounters=OUT+"/{prefix}/{genome}/pyReadCounters/{prefix}_count_output_reads.gtf",
 		gtf=lambda wildcards: config[wildcards.genome]["gtf"]
 	output:
-		OUT+"/{genome}/mapping/pyClusterReads/{prefix}.clusters.gtf"
+		OUT+"/{prefix}/{genome}/pyClusterReads/{prefix}.clusters.gtf"
 	conda: "envs/pipeline.yaml"
 	params:
-		outfile = OUT+"/{genome}/mapping/pyClusterReads/{prefix}.clusters.gtf"
+		outfile = OUT+"/{prefix}/{genome}/pyClusterReads/{prefix}.clusters.gtf"
 	shell:
 		"python pycrac/pyCRAC/pyClusterReads.py -f {input.gtf_pyreadcounters} --gtf={input.gtf} -o {params.outfile}"
 
@@ -91,12 +91,12 @@ rule pyClusterReads:
 
 rule generate_coverage_3prime:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai",
+		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai",
 		genome=OUT+"/{genome}_chrom.size"
 	conda: "envs/coverage.yaml"
 	output:
-		OUT+"/{genome}/mapping/coverage/{samtype}/{prefix}.{samtype}.3primebedGraph"
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.3primebedGraph"
 		# expand(OUT+"/{{genome}}/coverage/{{samtype}}/{{prefix}}.{{samtype}}.{type}.bedGraph",type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
 	script:
 		"scripts/generate_coverage.R"
@@ -104,10 +104,10 @@ rule generate_coverage_3prime:
 
 rule generate_coverage:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai"
+		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai"
 	output:
-		OUT+"/{genome}/mapping/coverage/{samtype}/{prefix}.{samtype}.bedGraph"
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.bedGraph"
 	conda: "envs/deeptools.yaml"
 	shell:
 		"bamCoverage -of bedgraph -b {input.bam} -o {output} --normalizeUsing None -bs 1"
@@ -119,11 +119,11 @@ def getbed(wildcards):
 
 rule generate_coverage_for_rDNA:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai",
+		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai",
 		bed=getbed
 	output:
-		OUT+"/{genome}/mapping/coverage/{samtype}/{prefix}.{samtype}.bedReporting.tsv"
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.bedReporting.tsv"
 	conda: "envs/bedtools.yaml"
 	shell:
 		"bedtools coverage -a {input.bed} -b {input.bam} > {output}"

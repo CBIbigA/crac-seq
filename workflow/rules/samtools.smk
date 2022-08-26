@@ -2,7 +2,7 @@ rule samtools_faidx:
 	input:
 		genome=getGenome
 	output:
-		"OUT/{genome}/{genome}.fai"
+		OUT+"/{genome}/{genome}.fai"
 	conda: "../envs/samtools.yaml"
 	shell:
 		"samtools faidx -o {output} {input}"
@@ -19,10 +19,10 @@ rule makeChromSize:
 
 rule sam_to_bam:
 	input:
-		sam=OUT+"/{genome}/mapping/sam/{prefix}.sam",
-		genome="OUT/{genome}/{genome}.fai"
+		sam=OUT+"/{prefix}/{genome}/sam/{prefix}.sam",
+		genome=OUT+"/{genome}/{genome}.fai"
 	output:
-		OUT+"/{genome}/mapping/bam/raw/{prefix}.bam"
+		OUT+"/{prefix}/{genome}/bam/raw/{prefix}.bam"
 	params:
 		quality=config["samtools"]["quality"],
 		custom=config["samtools"]["custom"]
@@ -41,9 +41,9 @@ rule sam_to_bam:
 
 rule samtools_sortn:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/raw/{prefix}.bam"
+		bam=OUT+"/{prefix}/{genome}/bam/raw/{prefix}.bam"
 	output:
-		OUT+"/{genome}/mapping/bam/sorted/{prefix}.nsorted.bam"
+		OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.nsorted.bam"
 	message: "##RUNNING : samtools sort -n {input.bam}"
 	conda: "../envs/samtools.yaml"
 	threads: config["threads"]
@@ -53,9 +53,9 @@ rule samtools_sortn:
 
 rule samtools_fixmate:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/sorted/{prefix}.nsorted.bam"
+		bam=OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.nsorted.bam"
 	output:
-		OUT+"/{genome}/mapping/bam/sorted/{prefix}.fixmate.bam"
+		OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.fixmate.bam"
 	message: "##RUNNING : samtools fixmate -m {input.bam}"
 	threads: config["threads"]
 	conda: "../envs/samtools.yaml"
@@ -66,9 +66,9 @@ rule samtools_fixmate:
 
 rule samtools_sort:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/sorted/{prefix}.fixmate.bam"
+		bam=OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.fixmate.bam"
 	output:
-		OUT+"/{genome}/mapping/bam/sorted/{prefix}.sorted.bam"
+		OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.sorted.bam"
 	threads: config["threads"]
 	message: "##RUNNING : samtools sort {input.bam}"
 	conda: "../envs/samtools.yaml"
@@ -80,9 +80,9 @@ rule samtools_sort:
 
 rule samtools_markdups:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/sorted/{prefix}.sorted.bam"
+		bam=OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.sorted.bam"
 	output:
-		OUT+"/{genome}/mapping/bam/markdup/{prefix}.markdup.bam"
+		OUT+"/{prefix}/{genome}/bam/markdup/{prefix}.markdup.bam"
 	message: "##RUNNING : samtools markdup {input.bam}"
 	threads: config["threads"]
 	conda: "../envs/samtools.yaml"
@@ -93,10 +93,10 @@ rule samtools_markdups:
 
 rule samtools_rmdups:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/markdup/{prefix}.markdup.bam",
-		bai=OUT+"/{genome}/mapping/bam/markdup/{prefix}.markdup.bai"
+		bam=OUT+"/{prefix}/{genome}/bam/markdup/{prefix}.markdup.bam",
+		bai=OUT+"/{prefix}/{genome}/bam/markdup/{prefix}.markdup.bai"
 	output:
-		OUT+"/{genome}/mapping/bam/rmdups/{prefix}.rmdups.bam"
+		OUT+"/{prefix}/{genome}/bam/rmdups/{prefix}.rmdups.bam"
 	message: "##RUNNING : samtools view -F 1024 {input.bam}"
 	threads: config["threads"]
 	conda: "../envs/samtools.yaml"
@@ -108,9 +108,9 @@ rule samtools_rmdups:
 
 rule samtools_index:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam"
+		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam"
 	output:
-		OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai"
+		OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai"
 	threads: config["threads"]
 	conda: "../envs/samtools.yaml"
 	message: "##RUNNING : samtools index {input}"
@@ -120,10 +120,10 @@ rule samtools_index:
 
 rule samtools_stats:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai"
+		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai"
 	output:
-		OUT+"/{genome}/QC/STATS/stats/{prefix}.{samtype}.stats"
+		OUT+"/{prefix}/{genome}/QC/STATS/stats/{prefix}.{samtype}.stats"
 	message: "##RUNNING : samtools stats {input}"
 	conda: "../envs/samtools.yaml"
 	shell:
@@ -131,10 +131,10 @@ rule samtools_stats:
 
 rule samtools_idxstats:
 	input:
-		bam=OUT+"//{genome}mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/mapping/bam/{samtype}/{prefix}.{samtype}.bai"
+		bam=OUT+"/{prefix}/bam/{samtype}/{prefix}.{samtype}.bam",
+		bai=OUT+"/{prefix}/bam/{samtype}/{prefix}.{samtype}.bai"
 	output:
-		OUT+"/{genome}/QC/STATS/idxstats/{prefix}.{samtype}.idxstats"
+		OUT+"/{prefix}/{genome}/QC/STATS/idxstats/{prefix}.{samtype}.idxstats"
 	message: "##RUNNING : samtools idxstats {input}"
 	conda: "../envs/samtools.yaml"
 	shell:
@@ -142,10 +142,10 @@ rule samtools_idxstats:
 
 rule samtools_flagstat:
 	input:
-		bam=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{genome}/mapping/bam/{samtype}/{prefix}.{samtype}.bai"
+		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai"
 	output:
-		OUT+"/{genome}/QC/STATS/flagstat/{prefix}.{samtype}.flagstat"
+		OUT+"/{prefix}/{genome}/QC/STATS/flagstat/{prefix}.{samtype}.flagstat"
 	message: "##RUNNING : samtools flagstat {input}"
 	conda: "../envs/samtools.yaml"
 	shell:

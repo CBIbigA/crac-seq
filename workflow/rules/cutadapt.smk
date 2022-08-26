@@ -6,9 +6,9 @@ def getOutFormat(wildcards):
 rule cutadapt_demultiplex:
 	input:
 		barcode = OUT+"/barcode.fa",
-		fastq = OUT+"/umi/{sample}"+config["fastq"]
+		fastq = OUT+"/{sample}/umi/{sample}"+config["fastq"]
 	output:
-		expand(OUT+"/demultiplex/{{sample}}_{barcode}"+config["fastq"],barcode=config["demultiplexing"]["barcode"])
+		expand(OUT+"/{{sample}}/demultiplex/{{sample}}_{barcode}"+config["fastq"],barcode=config["demultiplexing"]["barcode"])
 	log:OUT+"/demultiplex/{sample}.demultiplex.qc"
 	threads:config["threads"]
 	params:
@@ -23,10 +23,10 @@ rule cutadapt_demultiplex:
 
 rule cutadapt:
 	input:
-		fastq=OUT+"/{type}/{prefix}"+config["fastq"]
+		fastq=OUT+"/{prefix}/{type}/{prefix}"+config["fastq"]
 	output:
-		fastq=OUT+"/{type}/{prefix}.trimmed"+config["fastq"],
-		qc=OUT+"/{type}/{prefix}.trimmed.qc"
+		fastq=OUT+"/{prefix}/{type}/{prefix}.trimmed"+config["fastq"],
+		qc=OUT+"/{prefix}/{type}/{prefix}.trimmed.qc"
 	threads:config["threads"]
 	params:
 		adapters = config["cutadapt"]["adapters"],

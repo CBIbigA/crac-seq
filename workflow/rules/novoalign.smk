@@ -21,9 +21,9 @@ else:
 
 def conditionalInputNovoAlign(wildcards):
 	if config["demultiplexing"]["demultiplex"]:
-		return(OUT+"/demultiplex/"+wildcards.sample+in_ext)
+		return(OUT+"/"+wildcards.sample+"/demultiplex/"+wildcards.sample+in_ext)
 	else:
-		return(OUT+"/umi/"+wildcards.sample+in_ext)
+		return(OUT+"/"+wildcards.sample+"/umi/"+wildcards.sample+in_ext)
 
 rule novoalign:
 	input:
@@ -32,7 +32,7 @@ rule novoalign:
 		fastq=conditionalInputNovoAlign
 	threads:1
 	output:
-		OUT+"/{genome}/mapping/sam/{sample}.sam"
+		OUT+"/{sample}/{genome}/sam/{sample}.sam"
 	conda:
 		"../envs/novoalign.yaml"
 	shell:
