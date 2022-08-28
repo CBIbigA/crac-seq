@@ -27,9 +27,9 @@ if config["demultiplexing"]["demultiplex"]:
 	rule all:
 		input:
 			#expand(OUT+"/{genome}/coverage/{samtype}/{sample}_{barcode}.{samtype}.{type}.bedGraph",samtype=["umidedup","sorted"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"],type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
-			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+			expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+			expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+			expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 			#expand(OUT+"/demultiplex/{sample}_{barcode}.trimmed"+config["fastq"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 			#expand(OUT+"/{genome}/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 else:
