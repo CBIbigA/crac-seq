@@ -1,5 +1,5 @@
 def getOutFormat(wildcards):
-  return(OUT+"/demultiplex/"+wildcards.sample+"_{name}"+config["fastq"])
+  return(OUT+"/"+wildcards.sample+"_{name}"+"/demultiplex/"+wildcards.sample+"_{name}"+config["fastq"])
 
 
 
