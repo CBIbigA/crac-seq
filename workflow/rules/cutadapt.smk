@@ -8,7 +8,7 @@ rule cutadapt_demultiplex:
 		barcode = OUT+"/barcode.fa",
 		fastq = OUT+"/{sample}/umi/{sample}"+config["fastq"]
 	output:
-		expand(OUT+"/{{sample}}_{barcode}/demultiplex/{{sample}}_{barcode}"+config["fastq"],barcode=config["demultiplexing"]["barcode"])
+		expand(OUT+"/{{sample}}_{barcode}/demultiplex/{{sample}}_{barcode}"+config["fastq"],barcode=config["demultiplexing"]["barcode"]+["unknown"])
 	log:OUT+"/demultiplex/{sample}.demultiplex.qc"
 	threads:config["threads"]
 	params:
