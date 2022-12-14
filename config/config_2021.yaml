@@ -1,14 +1,22 @@
-input_dir: "data"
+input_dir: "data/CRAC"
 output_dir: "out"
 samples:
-  - CDE0103_S1_L001_R1_001
+        - CDE0103_S1_L001_R1_001_Control
+        - CDE0103_S1_L001_R1_001_SuperPol
+        - CDE0103_S1_L001_R1_001_WT
+        - CRAC123-DEZ_Control
+        - CRAC123-DEZ_SuperPol
+        - CRAC123-DEZ_WT
+        - CRAC456-DEZ_Controlbmh
+        - CRAC456-DEZ_SuperPolbmh
+        - CRAC456-DEZ_WTBmh
 fastq:  ".fastq"
 samtools:
   rm_duplicates: true
   quality: 25
-  custom: -F 2048
+  custom: -F 2052
 demultiplexing:
-  demultiplex: true
+  demultiplex: false
   five_prime: true
   barcode:
     WT: ATTAGC

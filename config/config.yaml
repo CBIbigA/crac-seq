@@ -1,15 +1,27 @@
 input_dir: "data/CRAC"
 output_dir: "out"
 samples:
-  - RPI4_S1_L001_R1_001
   - RPI5_S2_L001_R1_001
-  - RPI6_S3_L001_R1_001
   - RPI7_S4_L001_R1_001
+  - RPI6_S3_L001_R1_001
+  - RPI4_S1_L001_R1_001
+  - CDE01_S1_L001_R1_001
+  - CDE02_S2_L001_R1_001
+  - CDE03_S3_L001_R1_001
+  - CDE04_S4_L001_R1_001
+  - CDE05_S5_L001_R1_001
+  - CDE06_S6_L001_R1_001
+  - CDE15_S5_L001_R1_001
+  - CDE16_S6_L001_R1_001
+  - CDE11_S1_L001_R1_001
+  - CDE12_S2_L001_R1_001
+  - CDE13_S3_L001_R1_001
+  - CDE14_S4_L001_R1_001
 fastq:  ".fastq"
 samtools:
   rm_duplicates: true
   quality: 25
-  custom: -F 2048
+  custom: -F 2052
 demultiplexing:
   demultiplex: false
   five_prime: true
@@ -33,7 +45,7 @@ cutadapt:
   adapters: '-a TGGAATTCTCGG'
 threads: 8
 genome:
-  full_genome:
+  genome:
     dir: 'data/genome'
     name: 'Saccharomyces_cerevisiae.EF2.59.1.0'
     ext: '.fa'
@@ -47,3 +59,15 @@ genome:
     bed: "data/rDNA/NTS1-2_RDN37-1_NTS2-1_5S.bed"
 fastqc:
   multi_qc_path: "config/multiqc.yaml"
+
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+

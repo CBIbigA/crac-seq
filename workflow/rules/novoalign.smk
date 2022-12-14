@@ -32,7 +32,7 @@ rule novoalign:
 		fastq=conditionalInputNovoAlign
 	threads:1
 	output:
-		OUT+"/{sample}/{genome}/sam/{sample}.sam"
+		temp(OUT+"/{sample}/{genome}/sam/{sample}.sam")
 	conda:
 		"../envs/novoalign.yaml"
 	shell:

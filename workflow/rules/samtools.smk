@@ -22,7 +22,7 @@ rule sam_to_bam:
 		sam=OUT+"/{prefix}/{genome}/sam/{prefix}.sam",
 		genome=OUT+"/{genome}/{genome}.fai"
 	output:
-		OUT+"/{prefix}/{genome}/bam/raw/{prefix}.bam"
+		temp(OUT+"/{prefix}/{genome}/bam/raw/{prefix}.bam")
 	params:
 		quality=config["samtools"]["quality"],
 		custom=config["samtools"]["custom"]
@@ -43,7 +43,7 @@ rule samtools_sortn:
 	input:
 		bam=OUT+"/{prefix}/{genome}/bam/raw/{prefix}.bam"
 	output:
-		OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.nsorted.bam"
+		temp(OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.nsorted.bam")
 	message: "##RUNNING : samtools sort -n {input.bam}"
 	conda: "../envs/samtools.yaml"
 	threads: config["threads"]
@@ -55,7 +55,7 @@ rule samtools_fixmate:
 	input:
 		bam=OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.nsorted.bam"
 	output:
-		OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.fixmate.bam"
+		temp(OUT+"/{prefix}/{genome}/bam/sorted/{prefix}.fixmate.bam")
 	message: "##RUNNING : samtools fixmate -m {input.bam}"
 	threads: config["threads"]
 	conda: "../envs/samtools.yaml"

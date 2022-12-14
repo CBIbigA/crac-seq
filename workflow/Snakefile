@@ -1,9 +1,11 @@
 import pandas as pd
+import datetime
 
 configfile: "config/config.yaml"
 IN = config["input_dir"]
-OUT = config["output_dir"]
 
+OUT = config["output_dir"]+"/"+str(datetime.date.today())
+#OUT = config["output_dir"]+"/2022-09-09"
 
 
 
@@ -21,24 +23,24 @@ include:"rules/novoalign.smk"
 include:"rules/samtools.smk"
 include:"rules/umi_tools.smk"
 include:"rules/cutadapt.smk"
-
+include:"rules/rumidedup.smk"
 
 if config["demultiplexing"]["demultiplex"]:
-	rule all:
-		input:
-			#expand(OUT+"/{genome}/coverage/{samtype}/{sample}_{barcode}.{samtype}.{type}.bedGraph",samtype=["umidedup","sorted"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"],type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
-			expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
-			expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
-			#expand(OUT+"/demultiplex/{sample}_{barcode}.trimmed"+config["fastq"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
-			#expand(OUT+"/{genome}/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+        rule all:
+                input:
+                        #expand(OUT+"/{genome}/coverage/{samtype}/{sample}_{barcode}.{samtype}.{type}.bedGraph",samtype=["umidedup","sorted"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"],type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
+                        expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}_{genome}.{bedtype}",bedtype=["bedGraph","3primebedGraph","3prime_3prime_substitutionbedGraph","3prime_5prime_substitutionbedGraph"],type=["sorted","umidedup","rmdups","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+                        # expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}_{genome}.3primebedGraph",type=["sorted","umidedup","rmdups","Rumidedup"],genome=["rDNA"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+                        # expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}.3primebedGraph",type=["sorted","umidedup","rmdups","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"]),
+                        expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}_{genome}.bedReporting.tsv",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+                        #expand(OUT+"/demultiplex/{sample}_{barcode}.trimmed"+config["fastq"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+                        #expand(OUT+"/{genome}/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
 else:
-	rule all:
-		input:
-			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}.bedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}.3primebedGraph",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-			expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}.bedReporting.tsv",type=["sorted","umidedup"],genome=config["genome"].keys(),sample = config["samples"])
-			
+        rule all:
+                input:
+                        expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.{bedtype}",bedtype=["bedGraph","3primebedGraph","3prime_3prime_substitutionbedGraph","3prime_5prime_substitutionbedGraph"],type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"]),
+                        # expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.3primebedGraph",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"]),
+                        expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.bedReporting.tsv",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"])
 
 
 
@@ -89,29 +91,42 @@ rule pyClusterReads:
 
 
 
-rule generate_coverage_3prime:
-	input:
-		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai",
-		genome=OUT+"/{genome}_chrom.size"
-	conda: "envs/coverage.yaml"
-	output:
-		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.3primebedGraph"
-		# expand(OUT+"/{{genome}}/coverage/{{samtype}}/{{prefix}}.{{samtype}}.{type}.bedGraph",type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
-	script:
-		"scripts/generate_coverage.R"
+# rule generate_coverage_3prime:
+# 	input:
+# 		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+# 		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai",
+# 		genome=OUT+"/{genome}_chrom.size"
+# 	conda: "envs/coverage.yaml"
+# 	output:
+# 		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.3primebedGraph"
+# 		# expand(OUT+"/{{genome}}/coverage/{{samtype}}/{{prefix}}.{{samtype}}.{type}.bedGraph",type=["normalized","unnormalized","3prime_normalized","3prime_unnormalized"])
+# 	script:
+# 		"scripts/generate_coverage.R"
 
+
+# rule generate_coverage:
+# 	input:
+# 		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
+# 		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai"
+# 	output:
+# 		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.bedGraph"
+# 	conda: "envs/deeptools.yaml"
+# 	shell:
+# 		"bamCoverage -of bedgraph -b {input.bam} -o {output} --normalizeUsing None -bs 1"
 
 rule generate_coverage:
 	input:
 		bam=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bam",
-		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai"
+		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai",
+		genome=OUT+"/{genome}_chrom.size"
 	output:
-		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.bedGraph"
-	conda: "envs/deeptools.yaml"
-	shell:
-		"bamCoverage -of bedgraph -b {input.bam} -o {output} --normalizeUsing None -bs 1"
-
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.bedGraph",
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.3primebedGraph",
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.3prime_3prime_substitutionbedGraph",
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.3prime_5prime_substitutionbedGraph"
+	conda: "envs/coverage.yaml"
+	script:
+		"scripts/generate_coverage_perBase.R"
 
 def getbed(wildcards):
   return(config["genome"][wildcards.genome]["bed"])
@@ -123,7 +138,8 @@ rule generate_coverage_for_rDNA:
 		bai=OUT+"/{prefix}/{genome}/bam/{samtype}/{prefix}.{samtype}.bai",
 		bed=getbed
 	output:
-		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}.bedReporting.tsv"
+		OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.bedReporting.tsv"
 	conda: "envs/bedtools.yaml"
+	#threads: 4
 	shell:
-		"bedtools coverage -a {input.bed} -b {input.bam} > {output}"
+		"bedtools coverage -nonamecheck -a {input.bed} -b {input.bam} > {output}"
