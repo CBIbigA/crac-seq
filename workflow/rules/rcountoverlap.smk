@@ -8,9 +8,9 @@ rule generate_coverage:
     OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.3primebedGraph",
     OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.3prime_3prime_substitutionbedGraph",
     OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.3prime_5prime_substitutionbedGraph"
-  conda: "envs/coverage.yaml"
+  conda: "../envs/coverage.yaml"
   script:
-    "scripts/generate_coverage_perBase.R"
+    "../scripts/generate_coverage_perBase.R"
 
 def getbed(wildcards):
   return(config["genome"][wildcards.genome]["bed"])
@@ -23,7 +23,7 @@ def getbed(wildcards):
 #     bed=getbed
 #   output:
 #     OUT+"/{prefix}/{genome}/coverage/{samtype}/{prefix}.{samtype}_{genome}.bedReporting.tsv"
-#   conda: "envs/bedtools.yaml"
+#   conda: "../envs/bedtools.yaml"
 #   #threads: 4
 #   shell:
 #     "bedtools coverage -nonamecheck -a {input.bed} -b {input.bam} > {output}"
