@@ -2,6 +2,7 @@ suppressWarnings(suppressMessages(library(Rsamtools)))
 suppressWarnings(suppressMessages(library(GenomicAlignments)))
 suppressWarnings(suppressMessages(library(tidyverse)))
 suppressWarnings(suppressMessages(library(plyranges)))
+suppressWarnings(suppressMessages(library(rtracklayer)))
 
 
 monbam <- snakemake@input[["bam"]]
