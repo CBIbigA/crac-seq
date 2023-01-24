@@ -8,14 +8,14 @@ else:
 if config["umi_tools"]["trimm"]["trimm"]:
 	rule umi_extract:
 		input:
-			fastq=IN+"/{sample}"+config["fastq"]
+			fastq=IN+"/{sample}"+EXT
 		output:
-			fastq=OUT+"/{sample}/umi/{sample}"+config["fastq"]
+			fastq=OUT+"/{sample}/umi/{sample}"+EXT
 		log:OUT+"/{sample}/umi/{sample}.log"
 		conda:
 			"../envs/umi_and_trim.yaml"
 		params:
-			trimfile=OUT+"/{sample}/umi/{sample}_fastx"+config["fastq"],
+			trimfile=OUT+"/{sample}/umi/{sample}_fastx"+EXT,
 			trimnumber=config["umi_tools"]["trimm"]["trim_supp"]+1,
 			extra= umi_extract_extra,
 			bc_pattern=config["umi_tools"]["extract"]["bc-pattern"],
@@ -28,9 +28,9 @@ if config["umi_tools"]["trimm"]["trimm"]:
 else:
 	rule umi_extract:
 		input:
-			fastq=IN+"/{sample}"+config["fastq"]
+			fastq=IN+"/{sample}"+EXT
 		output:
-			fastq=OUT+"/{sample}/umi/{sample}"+config["fastq"]
+			fastq=OUT+"/{sample}/umi/{sample}"+EXT
 		log:OUT+"/{sample}/umi/{sample}.log"
 		conda:
 			"../envs/umi_tools.yaml"

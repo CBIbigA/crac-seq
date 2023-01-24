@@ -14,9 +14,9 @@ rule novoindex:
 
 
 if not config["cutadapt"]["adapters"]:
-	in_ext = config["fastq"]
+	in_ext = EXT
 else:
-	in_ext = ".trimmed"+config["fastq"]
+	in_ext = ".trimmed"+EXT
 
 
 def conditionalInputNovoAlign(wildcards):

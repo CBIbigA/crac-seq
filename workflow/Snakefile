@@ -1,5 +1,6 @@
 import pandas as pd
 import datetime
+import os
 
 configfile: "config/config.yaml"
 IN = config["input_dir"]
@@ -8,6 +9,17 @@ OUT = config["output_dir"]+"/"+str(datetime.date.today())
 #OUT = config["output_dir"]+"/2022-09-09"
 
 
+
+name,ext = os.path.splitext(config["fastq"])
+if ext == ".gz":
+        rule decompress:
+                input:IN+"/{sample}"+config["fastq"]
+                output:temp(IN+"/{sample}"+name)
+                shell:"gunzip -c {input} > {output}"
+
+        EXT=name
+else:
+        EXT=config["fastq"]
 
 if config["samtools"]["rm_duplicates"]:
 	samtype="rmdups"
@@ -35,13 +47,14 @@ if config["demultiplexing"]["demultiplex"]:
                         expand(OUT+"/{sample}_{barcode}/{genome}/coverage/{type}/{sample}_{barcode}.{type}_{genome}.bedReporting.tsv",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
                         #expand(OUT+"/demultiplex/{sample}_{barcode}.trimmed"+config["fastq"],sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
                         #expand(OUT+"/{genome}/pyClusterReads/{sample}_{barcode}.clusters.gtf",genome=config["genome"].keys(),sample = config["samples"],barcode=config["demultiplexing"]["barcode"])
+                default_target: True
 else:
         rule all:
                 input:
                         expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.{bedtype}",bedtype=["bedGraph","3primebedGraph","3prime_3prime_substitutionbedGraph","3prime_5prime_substitutionbedGraph"],type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"]),
                         # expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.3primebedGraph",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"]),
                         expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.bedReporting.tsv",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"])
-
+                default_target: True
 
 
 
