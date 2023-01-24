@@ -36,6 +36,7 @@ include:"rules/samtools.smk"
 include:"rules/umi_tools.smk"
 include:"rules/cutadapt.smk"
 include:"rules/rumidedup.smk"
+include:"rules/rcountoverlap.smk"
 
 if config["demultiplexing"]["demultiplex"]:
         rule all:
@@ -53,7 +54,7 @@ else:
                 input:
                         expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.{bedtype}",bedtype=["bedGraph","3primebedGraph","3prime_3prime_substitutionbedGraph","3prime_5prime_substitutionbedGraph"],type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"]),
                         # expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.3primebedGraph",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"]),
-                        expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.bedReporting.tsv",type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"])
+                        expand(OUT+"/{sample}/{genome}/coverage/{type}/{sample}.{type}_{genome}.{bedReporting}.tsv",bedReporting = ["bedReporting","RbedReporting"],type=["sorted","umidedup","Rumidedup"],genome=config["genome"].keys(),sample = config["samples"])
                 default_target: True
 
 
